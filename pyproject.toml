@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-weaviate-client = "^4.8.0"
+weaviate-client = "4.7.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.4"

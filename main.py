@@ -14,6 +14,7 @@ from weaviate.types import UUID
 # )
 # data = json.loads(resp.text)  # Load data
 
+SERVER_ADDRESS = "192.168.0.15"
 
 def json_print(data: dict):
     print(json.dumps(data, indent=2))
@@ -33,20 +34,22 @@ def list_collections():
 
 
 def create_collection():
-    with weaviate.connect_to_local() as client:
+    with weaviate.connect_to_local(host=SERVER_ADDRESS) as client:
         # resetting the collection. CAUTION: This will delete your collection
         if client.collections.exists("Question"):
             client.collections.delete("Question")
 
         client.collections.create(
             name="Question",
-            # vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_transformers(),  # If set to "none" you must always provide vectors yourself. Could be any other "text2vec-*" also.
+            # vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_transformers(),  # If set to "none" you must always provide vectors yourself.
             vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_ollama(
-                api_endpoint="http://host.docker.internal:11434",
+                # api_endpoint="http://host.docker.internal:11434",
+                api_endpoint=f"http://{SERVER_ADDRESS}:11434",
                 model="all-minilm"
             ),
             generative_config=wvc.config.Configure.Generative.ollama(
-                api_endpoint="http://host.docker.internal:11434",
+                # api_endpoint="http://host.docker.internal:11434",
+                api_endpoint=f"http://{SERVER_ADDRESS}:11434",
                 model="llama3.1:8b"
             )
         )
@@ -56,7 +59,7 @@ def create_collection():
 
 def create_object() -> UUID:
     """create an object"""
-    with weaviate.connect_to_local() as client:
+    with weaviate.connect_to_local(host=SERVER_ADDRESS) as client:
         with client.batch.dynamic() as batch:
             object_uuid = batch.add_object(
                 properties={
@@ -86,7 +89,12 @@ def create_object() -> UUID:
 
 
 def read(object_uuid: UUID):
-    with weaviate.connect_to_local() as client:
+    with weaviate.connect_to_local(
+        host=SERVER_ADDRESS,
+        additional_config=AdditionalConfig(
+            timeout=Timeout(init=3000, query=3000, insert=120)
+        )
+    ) as client:
         questions = client.collections.get("Question")
 
         print("fetching object by id")
@@ -99,23 +107,43 @@ def read(object_uuid: UUID):
         json_print(response.objects[0].properties)  # Inspect the first object
 
         # Generative search (single prompt)
-        # print("generative search (single prompt)")
-        # response = questions.generate.near_text(
-        #     query="biology",
-        #     single_prompt="Explain {answer} as you might to a five-year-old.",
-        #     limit=2,
-        # )
+        print("generative search (single prompt)")
+        query = "Quem é José Nunes?"
+        response = questions.generate.near_text(
+            query=query,
+            single_prompt="Answer the question: {answer}", 
+            limit=1,
+        )
 
-        # print(response.objects[0].generated)  # Inspect the generated text
+        print("pergunta:", query)
+        print("resposta", response.objects[0].generated)  # Inspect the generated text
+        query = "Qual seu nome completo de José Nunes?"
+        response = questions.generate.near_text(
+            query=query,
+            single_prompt="Answer the question: {answer}", 
+            limit=1,
+        )
 
-        # # Generative search (grouped task)
-        # response = questions.generate.near_text(
-        #     query="biology",
-        #     grouped_task="Write a tweet with emojis about these facts.",
-        #     limit=2,
-        # )
+        print("pergunta:", query)
+        print("resposta", response.objects[0].generated)  # Inspect the generated text
 
-        # print(response.generated)  # Inspect the generated text
+        query = "De forma direta e curta diga em qual país José Nunes"
+        response = questions.generate.near_text(
+            query=query,
+            single_prompt="Answer the question: {answer}", 
+            limit=1,
+        )
+        print("pergunta:", query)
+        print("resposta", response.objects[0].generated)  # Inspect the generated text
+
+        # Generative search (grouped task)
+        response = questions.generate.near_text(
+            query="biology",
+            grouped_task="Write a tweet with emojis about these facts.",
+            limit=1,
+        )
+
+        print(response.generated)  # Inspect the generated text
 
 
 def update(object_uuid: str):

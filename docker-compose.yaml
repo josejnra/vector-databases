@@ -1,3 +1,5 @@
+# Windows/linux configuration
+
 services:
 
   weaviate:
@@ -35,10 +37,18 @@ services:
   ollama:
     image: ollama/ollama
     container_name: ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              # device_ids: ['0', '3']
+              count: all
+              capabilities: [gpu]
     environment:
       MODELS: all-minilm,mistral:latest 
-    # volumes:
-    #   - ./ollama_data:/root/.ollama
+    volumes:
+      - ./ollama_data:/root/.ollama
     ports:
       - 11434:11434
 

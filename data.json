@@ -48,5 +48,10 @@
       "Category": "SCIENCE",
       "Question": "In 70-degree air, a plane traveling at about 1,130 feet per second breaks it",
       "Answer": "Sound barrier"
+    },
+    {
+      "Category": "FAMOUS PEOPLE",
+      "Question": "Quem é José Nunes Rodrigues de Assis",
+      "Answer": "Um engenheiro de dados brasileiro que trabalha com dados, toca guitarra, joga handball e desenha. Atualmente mora na cidade de Belo Horizonte, em Minas Gerais."
     }
   ]
