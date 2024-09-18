@@ -46,6 +46,7 @@ def create_collection():
                 # api_endpoint="http://host.docker.internal:11434",
                 api_endpoint=f"http://{SERVER_ADDRESS}:11434",
                 model="all-minilm"
+                # model="paraphrase-multilingual"
             ),
             generative_config=wvc.config.Configure.Generative.ollama(
                 # api_endpoint="http://host.docker.internal:11434",
@@ -60,6 +61,15 @@ def create_collection():
 def create_object() -> UUID:
     """create an object"""
     with weaviate.connect_to_local(host=SERVER_ADDRESS) as client:
+        questions = client.collections.get("Question")
+        questions.data.insert(
+            properties={
+                "question": "Monalisa was created by this artist.",
+                "answer": "Leonardo da Vinci",
+                "category": "Culture",
+            },
+        )
+
         with client.batch.dynamic() as batch:
             object_uuid = batch.add_object(
                 properties={
@@ -101,14 +111,31 @@ def read(object_uuid: UUID):
         json_print(questions.query.fetch_object_by_id(object_uuid).properties)
 
         # semantic search
-        print("semantic search")
-        response = questions.query.near_text(query="biology", limit=2)
-
+        print("semantic search\n")
+        query = "biology"
+        response = questions.query.near_text(query=query, limit=2)
+        print("query:", query)
         json_print(response.objects[0].properties)  # Inspect the first object
+
+        query = "seu madroga?"
+        response = questions.query.near_text(query=query, limit=2)
+        print("query:", query)
+        for obj in response.objects:
+            json_print(obj.properties)
+
+
+def generative_search():
+    with weaviate.connect_to_local(
+        host=SERVER_ADDRESS,
+        additional_config=AdditionalConfig(
+            timeout=Timeout(init=3000, query=3000, insert=120)
+        )
+    ) as client:
+        questions = client.collections.get("Question")
 
         # Generative search (single prompt)
         print("generative search (single prompt)")
-        query = "Quem é José Nunes?"
+        query = "Quem é Seu Madroga?"
         response = questions.generate.near_text(
             query=query,
             single_prompt="Answer the question: {answer}", 
@@ -117,7 +144,7 @@ def read(object_uuid: UUID):
 
         print("pergunta:", query)
         print("resposta", response.objects[0].generated)  # Inspect the generated text
-        query = "Qual seu nome completo de José Nunes?"
+        query = "Qual o nome completo de Seu Madroga?"
         response = questions.generate.near_text(
             query=query,
             single_prompt="Answer the question: {answer}", 
@@ -127,7 +154,7 @@ def read(object_uuid: UUID):
         print("pergunta:", query)
         print("resposta", response.objects[0].generated)  # Inspect the generated text
 
-        query = "De forma direta e curta diga em qual país José Nunes"
+        query = "De forma direta e curta diga em qual país Seu Madroga vive"
         response = questions.generate.near_text(
             query=query,
             single_prompt="Answer the question: {answer}", 
@@ -147,55 +174,33 @@ def read(object_uuid: UUID):
 
 
 def update(object_uuid: str):
-    with weaviate.connect_to_local() as client:
-        client.data_object.update(
+    with weaviate.connect_to_local(host=SERVER_ADDRESS) as client:
+        questions = client.collections.get("Question")
+        questions.data.update(
             uuid=object_uuid,
-            class_name="Question",
-            data_object={"answer": "Florence, Italy"},
+            properties={"answer": "Florence, Italy"},
         )
 
-        data_object = client.data_object.get_by_id(
-            object_uuid,
-            class_name="Question",
+        data_object = questions.query.fetch_object_by_id(
+            object_uuid
         )
 
-        json_print(data_object)
+        json_print(data_object.properties)
 
 
 def delete(object_uuid: str):
-    with weaviate.connect_to_local() as client:
-        json_print(client.query.aggregate("Question").with_meta_count().do())
-        client.data_object.delete(uuid=object_uuid, class_name="Question")
-        json_print(client.query.aggregate("Question").with_meta_count().do())
-
-
-def query():
-    with weaviate.connect_to_local() as client:
-        response = (
-            client.query.get("Question", ["question", "answer", "category"])
-            .with_near_text({"concepts": "biology"})
-            .with_additional("distance")
-            .with_limit(2)
-            .do()
-        )
-
-        json_print(response)
-
-        # We can let the vector database know to remove results after a threshold distance!
-
-        response = (
-            client.query.get("Question", ["question", "answer"])
-            .with_near_text({"concepts": ["animals"], "distance": 0.24})
-            .with_limit(10)
-            .with_additional(["distance"])
-            .do()
-        )
-
-        json_print(response)
-
+    with weaviate.connect_to_local(host=SERVER_ADDRESS) as client:
+        questions = client.collections.get("Question")
+        for obj in questions.iterator():
+            json_print(obj.uuid, obj.properties)
+        questions.data.delete_by_id(uuid=object_uuid)
+        for obj in questions.iterator():
+            json_print(obj.uuid, obj.properties)
 
 if __name__ == "__main__":
     create_collection()
     # list_collections()
     object_uuid = create_object()
-    read(object_uuid)
+    # read(object_uuid)
+    # update(object_uuid)
+    # delete(object_uuid)
