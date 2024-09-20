@@ -131,6 +131,9 @@ The most common full sequence from raw data to answer looks like:
 ### LangChain
 LangChain is a framework for developing applications powered by large language models (LLMs). LangChain provides tools and abstractions to improve the customization, accuracy, and relevancy of the information the models generate. For example, developers can use LangChain components to build new prompt chains or customize existing templates. LangChain also includes components that allow LLMs to access new data sets without retraining.
 
+#### LangSmith
+Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more and more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with LangSmith.
+
 ## Ollama locally
 
 ### Download models
@@ -155,3 +158,4 @@ curl http://192.168.0.12:11434/api/generate -d '{"model": "llama3.1:8b","prompt"
 - [LangChain](https://python.langchain.com/v0.2/docs/introduction/) 
 - [Vector Indexing](https://medium.com/@myscale/understanding-vector-indexing-a-comprehensive-guide-d1abe36ccd3c)
 - [Introduction to RAG](https://medium.com/enterprise-rag/an-introduction-to-rag-and-simple-complex-rag-9c3aa9bd017b)
+- [Creating a RAG with LangChain](https://python.langchain.com/v0.2/docs/tutorials/rag/)
