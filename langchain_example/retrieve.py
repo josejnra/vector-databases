@@ -29,7 +29,7 @@ def list_collections(collection_name: str):
             print(object.properties)
 
 
-def weavite_search(collection_name: str, k: int = 4) -> list[Document]:
+def weavite_search(query: str, collection_name: str, k: int = 4) -> list[Document]:
     with weaviate.connect_to_local(host=SERVER_ADDRESS) as client:
         weaviate_db = WeaviateVectorStore(
             client=client,
@@ -39,7 +39,6 @@ def weavite_search(collection_name: str, k: int = 4) -> list[Document]:
                 base_url=OLLAMA_BASE_URL, model=OLLAMA_EMBEDDINGS_MODEL
             ),
         )
-        query = "What are the approaches to Task Decomposition?"
         docs = weaviate_db.similarity_search(query, k)
 
         print(f"Found {len(docs)} results for query '{query}':")

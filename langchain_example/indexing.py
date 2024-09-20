@@ -9,7 +9,19 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_weaviate import WeaviateVectorStore
 
 
-def read_web_page(url: str) -> list[Document]:
+def read_a_web_page(url: str) -> list[Document]:
+    """Read the content of a web page."""
+    loader = WebBaseLoader(
+        web_paths=(url,),
+        bs_kwargs={"parse_only": bs4.SoupStrainer()},
+    )
+    docs = loader.load()
+
+    print(len(docs[0].page_content))
+    return docs
+
+
+def read_blog_post_page(url: str) -> list[Document]:
     """Read the content of a web page."""
     # Only keep post title, headers, and content from the full HTML.
     bs4_strainer = bs4.SoupStrainer(
