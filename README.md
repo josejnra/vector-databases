@@ -2,6 +2,8 @@
 
 ### Vector Database
 
+A vector database is a database that stores information as vectors, which are numerical representations of data objects, also known as vector embeddings
+
 Vector databases are specialized data management systems designed to handle complex, high-dimensional data that is typically represented in vector form. They represent a shift away from traditional databases and have evolved based on the need to store and process data types as vectors.
 
 A core function of vector databases is measuring the similarity between vectors. This is often done using metrics like cosine similarity, Euclidean distance, or Manhattan distance. These metrics help identify how close or similar two data points (vectors) are to one another.
@@ -61,11 +63,23 @@ Another area where vector databases are increasingly used is with large language
 Furthermore, this extends to Retrieval-Augmented Generative (RAG) models, where the benefits of incorporating them into vector databases include enhanced context preservation, increased trustworthiness, and improved performance. This integration facilitates a more sophisticated understanding of language nuances and context, contributing to the effectiveness of applications relying on these advanced language models.
 
 
+### Vector Index
+
+Vector indexing is not just about storing data, it’s about intelligently organizing the vector embeddings to optimize the retrieval process. This technique involves advanced algorithms to neatly arrange the high-dimensional vectors in a searchable and efficient manner. This arrangement is not random; it’s done in a way that similar vectors are grouped together, by which vector indexing allows quick and accurate similarity searches and pattern identification, especially for searching large and complex datasets.
+
+<p align="center">
+    <img src="images/vector-index.webp" alt="Vector Index"/>
+</p>
+
+Let’s say you have a vector for each image, capturing its features. The vector index will organize these vectors in a way that makes it easier to find similar images (here). You can think of it as if you are organizing each person’s images separately. So, if you need a specific person’s picture from a particular event, instead of searching through all the pictures, you would only go through that person’s collection and easily find the image.
+
+
 #### Open Source Options
 
 - [Milvus](https://milvus.io/docs)
 - [Weaviate](https://weaviate.io/)
 - [Faiss](https://github.com/facebookresearch/faiss)
+- [Chromadb](https://www.trychroma.com/)
 
 ### Embedding Models
 
@@ -76,8 +90,46 @@ Embedding models are models that are trained specifically to generate vector emb
 </p>
 
 The resulting vector embedding arrays can then be stored in a database, which will compare them as a way to search for data that is similar in meaning.
+Specialized databases used to store these embedding vectors are known as vector databases. These databases take advantage of the mathematical properties of embeddings that allow similar items to be stored together. Different techniques are used to store similar vectors together and dissimilar vectors apart. They are vector indexing techniques.
 
 ### RAG (Retrieval Augmented Generation)
+RAG is a technique for augmenting LLM knowledge with additional data.
+
+RAG is a framework for improving model performance by augmenting prompts with relevant data outside the foundational model, grounding LLM responses on real, trustworthy information. Users can easily “drag and drop” their company documents into a vector database, enabling a LLM to answer questions about these documents efficiently.
+
+A typical RAG process, as pictured below, has an LLM, a collection of enterprise documents, and supporting infrastructure to improve information retrieval and answer construction. The RAG pipeline looks at the database for concepts and data that seem similar to the question being asked, extracts the data from a vector database and reformulates the data into an answer that is tailored to the question asked. This makes RAG a powerful tool for companies looking to harness their existing data repositories for enhanced decision-making and information access.
+<p align="center">
+    <img src="images/rag.webp" alt="RAG"/>
+</p>
+
+
+A typical RAG application has two main components:
+
+- *Indexing*: a pipeline for ingesting data from a source and indexing it. This usually happens offline.
+- *Retrieval and generation*: the actual RAG chain, which takes the user query at run time and retrieves the relevant data from the index, then passes that to the model.
+
+The most common full sequence from raw data to answer looks like:
+
+#### Indexing
+- *Load*: First we need to load our data. This is done with Document Loaders.
+- *Split*: Text splitters break large Documents into smaller chunks. This is useful both for indexing data and for passing it in to a model, since large chunks are harder to search over and won't fit in a model's finite context window.
+- *Store*: We need somewhere to store and index our splits, so that they can later be searched over. This is often done using a VectorStore and Embeddings model.
+
+<p align="center">
+    <img src="images/rag-indexing.png" alt="RAG indexing"/>
+</p>
+
+#### Retrieval and generation
+- *Retrieve*: Given a user input, relevant splits are retrieved from storage using a Retriever.
+- *Generate*: A ChatModel / LLM produces an answer using a prompt that includes the question and the retrieved data
+
+<p align="center">
+    <img src="images/rag-retrieval.png" alt="RAG retrieval"/>
+</p>
+
+
+### LangChain
+LangChain is a framework for developing applications powered by large language models (LLMs). LangChain provides tools and abstractions to improve the customization, accuracy, and relevancy of the information the models generate. For example, developers can use LangChain components to build new prompt chains or customize existing templates. LangChain also includes components that allow LLMs to access new data sets without retraining.
 
 ## Ollama locally
 
@@ -99,3 +151,7 @@ curl http://192.168.0.12:11434/api/generate -d '{"model": "llama3.1:8b","prompt"
 ## References
 - [Vector Databases](https://nexla.com/ai-infrastructure/vector-databases/)
 - [Embedding Models](https://ollama.com/blog/embedding-models)
+- [Jupyter Notebook example](https://github.com/weaviate/recipes/blob/main/weaviate-features/generative-search/local_rag_using_ollama_integration_using_embedded.ipynb) 
+- [LangChain](https://python.langchain.com/v0.2/docs/introduction/) 
+- [Vector Indexing](https://medium.com/@myscale/understanding-vector-indexing-a-comprehensive-guide-d1abe36ccd3c)
+- [Introduction to RAG](https://medium.com/enterprise-rag/an-introduction-to-rag-and-simple-complex-rag-9c3aa9bd017b)
